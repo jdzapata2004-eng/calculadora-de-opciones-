@@ -1,6 +1,7 @@
 import streamlit as st
 import sys
 import os
+import plotly.graph_objects as go
 
 sys.path.append(
     os.path.abspath(
@@ -23,14 +24,16 @@ st.set_page_config(
 # TÍTULO PRINCIPAL
 # ---------------------------------------------------
 
-st.title("📈 Derivatives Pricing Platform")
-st.markdown("### Binomial Tree Option Pricing Model")
+st.markdown("""
+# 📈 Derivatives Pricing Platform
+### Binomial Tree Option Pricing Engine
+""")
 
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
 
-st.sidebar.header("Option Configuration")
+st.sidebar.markdown("## ⚙️ Option Configuration")
 
 # Tipo de activo
 asset_type = st.sidebar.selectbox(
@@ -64,7 +67,7 @@ exercise_type = st.sidebar.selectbox(
 # PARÁMETROS PRINCIPALES
 # ---------------------------------------------------
 
-st.sidebar.header("Market Parameters")
+st.sidebar.markdown("## 📊 Market Parameters")
 
 spot = st.sidebar.number_input(
     "Spot Price (S0)",
@@ -127,20 +130,67 @@ calculate = st.sidebar.button("Calculate Option Price")
 # PANEL PRINCIPAL
 # ---------------------------------------------------
 
-st.subheader("Selected Configuration")
+col1, col2, col3 = st.columns(3)
 
-st.write(f"Underlying Asset: {asset_type}")
-st.write(f"Option Type: {option_type}")
-st.write(f"Exercise Style: {exercise_type}")
+with col1:
+    st.metric(
+        "Underlying",
+        asset_type
+    )
 
-st.subheader("Current Parameters")
+with col2:
+    st.metric(
+        "Option Type",
+        option_type
+    )
 
-st.write(f"Spot Price: {spot}")
-st.write(f"Strike Price: {strike}")
-st.write(f"Risk-Free Rate: {risk_free_rate}")
-st.write(f"Volatility: {volatility}")
-st.write(f"Time to Maturity: {maturity}")
-st.write(f"Steps: {steps}")
+with col3:
+    st.metric(
+        "Exercise Style",
+        exercise_type
+    )
+
+st.divider()
+
+col4, col5, col6 = st.columns(3)
+
+with col4:
+    st.metric(
+        "Spot Price",
+        f"{spot:.2f}"
+    )
+
+with col5:
+    st.metric(
+        "Strike Price",
+        f"{strike:.2f}"
+    )
+
+with col6:
+    st.metric(
+        "Volatility",
+        f"{volatility:.2%}"
+    )
+
+col7, col8, col9 = st.columns(3)
+
+with col7:
+    st.metric(
+        "Risk-Free Rate",
+        f"{risk_free_rate:.2%}"
+    )
+
+with col8:
+    st.metric(
+        "Maturity",
+        f"{maturity:.2f} Years"
+    )
+
+with col9:
+    st.metric(
+        "Steps",
+        f"{steps}"
+    )
 
 # ---------------------------------------------------
 # PLACEHOLDER RESULTADO
@@ -173,9 +223,93 @@ if calculate:
         exercise_type=exercise_type.lower(),
         q=q
     )
+        # --------------------------------------------
+    # CONVERGENCE ANALYSIS
+    # --------------------------------------------
 
+    step_values = [
+        5,
+        10,
+        25,
+        50,
+        100,
+        250,
+        500,
+        1000
+    ]
+
+    convergence_prices = []
+
+    for n_steps in step_values:
+
+        price = price_option_binomial(
+            S0=spot,
+            K=strike,
+            r=risk_free_rate,
+            sigma=volatility,
+            T=maturity,
+            N=n_steps,
+            option_type=option_type.lower(),
+            exercise_type=exercise_type.lower(),
+            q=q
+        )
+
+        convergence_prices.append(price)
+
+    # --------------------------------------------
+    # OPTION PREMIUM
+    # --------------------------------------------
+
+    st.divider()
+
+    st.markdown("## 💰 Option Premium")
+
+    st.metric(
+        label="Calculated Option Price",
+        value=f"{option_price:.4f}"
+    )
+
+    # --------------------------------------------
+    # PLOTLY CONVERGENCE CHART
+    # --------------------------------------------
+
+    st.divider()
+
+    st.markdown("## 📈 Binomial Convergence Analysis")
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=step_values,
+            y=convergence_prices,
+            mode="lines+markers",
+            name="Binomial Price"
+        )
+    )
+
+    fig.update_layout(
+        template="plotly_dark",
+        title="Binomial Model Convergence",
+        xaxis_title="Number of Steps",
+        yaxis_title="Option Price",
+        height=500
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
     # Display Result
 
-    st.subheader("Option Premium")
+    if calculate:
 
-    st.success(f"Option Price: {option_price:.4f}")
+        st.divider()
+
+        st.markdown("## 💰 Option Premium")
+
+        st.metric(
+            label="Calculated Option Price",
+            value=f"{option_price:.4f}"
+        )
+    
