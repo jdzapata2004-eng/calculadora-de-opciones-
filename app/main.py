@@ -2,6 +2,17 @@ import streamlit as st
 import sys
 import os
 import plotly.graph_objects as go
+import numpy as np
+
+sys.path.append(
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..")
+    )
+)
+
+from src.binomial_model import price_option_binomial
+from src.black_scholes import price_option_black_scholes
+from src.strategies import option_payoff
 
 sys.path.append(
     os.path.abspath(
@@ -34,6 +45,13 @@ st.markdown("""
 # ---------------------------------------------------
 
 st.sidebar.markdown("## ⚙️ Option Configuration")
+pricing_model = st.sidebar.selectbox(
+    "Pricing Model",
+    [
+        "Binomial Tree",
+        "Black-Scholes"
+    ]
+)
 
 # Tipo de activo
 asset_type = st.sidebar.selectbox(
@@ -130,7 +148,12 @@ calculate = st.sidebar.button("Calculate Option Price")
 # PANEL PRINCIPAL
 # ---------------------------------------------------
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
+with col4:
+    st.metric(
+        "Pricing Model",
+        pricing_model
+    )
 
 with col1:
     st.metric(
@@ -191,7 +214,73 @@ with col9:
         "Steps",
         f"{steps}"
     )
+st.divider()
+# ---------------------------------------------------
+# STRATEGY BUILDER
+# ---------------------------------------------------
 
+st.markdown("## 📊 Strategy Builder")
+
+strategy_type = st.selectbox(
+    "Select Strategy",
+    [
+        "Custom Strategy",
+        "Bull Call Spread",
+        "Bear Put Spread",
+        "Straddle",
+        "Strangle"
+    ]
+)
+
+num_legs = st.slider(
+    "Number of Positions",
+    min_value=1,
+    max_value=4,
+    value=2
+)
+
+positions = []
+
+for i in range(num_legs):
+
+    st.markdown(f"### Position {i+1}")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+
+        position_side = st.selectbox(
+            f"Side {i}",
+            ["Long", "Short"]
+        )
+
+    with col2:
+
+        option_kind = st.selectbox(
+            f"Option Type {i}",
+            ["Call", "Put"]
+        )
+
+    with col3:
+
+        strike_input = st.number_input(
+            f"Strike {i}",
+            value=100.0
+        )
+
+    with col4:
+
+        premium_input = st.number_input(
+            f"Premium {i}",
+            value=5.0
+        )
+
+    positions.append({
+        "side": position_side,
+        "type": option_kind,
+        "strike": strike_input,
+        "premium": premium_input
+    })
 # ---------------------------------------------------
 # PLACEHOLDER RESULTADO
 # ---------------------------------------------------
@@ -212,17 +301,41 @@ if calculate:
 
     # Option Pricing
 
-    option_price = price_option_binomial(
-        S0=spot,
-        K=strike,
-        r=risk_free_rate,
-        sigma=volatility,
-        T=maturity,
-        N=steps,
-        option_type=option_type.lower(),
-        exercise_type=exercise_type.lower(),
-        q=q
-    )
+        # --------------------------------------------
+    # OPTION PRICING
+    # --------------------------------------------
+
+    if pricing_model == "Binomial Tree":
+
+        option_price = price_option_binomial(
+            S0=spot,
+            K=strike,
+            r=risk_free_rate,
+            sigma=volatility,
+            T=maturity,
+            N=steps,
+            option_type=option_type.lower(),
+            exercise_type=exercise_type.lower(),
+            q=q
+        )
+
+    elif pricing_model == "Black-Scholes":
+
+        result = price_option_black_scholes(
+            S0=spot,
+            K=strike,
+            r=risk_free_rate,
+            sigma=volatility,
+            T=maturity,
+            option_type=option_type.lower(),
+            q=q
+        )
+
+        option_price = result["price"]
+
+        d1 = result["d1"]
+
+        d2 = result["d2"]
         # --------------------------------------------
     # CONVERGENCE ANALYSIS
     # --------------------------------------------
@@ -268,7 +381,25 @@ if calculate:
         label="Calculated Option Price",
         value=f"{option_price:.4f}"
     )
+    if pricing_model == "Black-Scholes":
 
+        st.divider()
+
+        st.markdown("## 📘 Black-Scholes Parameters")
+
+        col_bs1, col_bs2 = st.columns(2)
+
+        with col_bs1:
+            st.metric(
+                "d1",
+                f"{d1:.4f}"
+            )
+
+        with col_bs2:
+            st.metric(
+                "d2",
+                f"{d2:.4f}"
+            )
     # --------------------------------------------
     # PLOTLY CONVERGENCE CHART
     # --------------------------------------------
@@ -312,4 +443,77 @@ if calculate:
             label="Calculated Option Price",
             value=f"{option_price:.4f}"
         )
+
+        # ---------------------------------------------------
+# PAYOFF DIAGRAM
+# ---------------------------------------------------
+
+st.divider()
+
+st.markdown("## 📈 Payoff Diagram")
+
+stock_prices = np.linspace(
+    spot * 0.5,
+    spot * 1.5,
+    500
+)
+
+total_payoff = np.zeros_like(stock_prices)
+
+total_payoff = np.zeros_like(stock_prices)
+
+fig_strategy = go.Figure()
+
+for idx, position in enumerate(positions):
+
+    payoff = option_payoff(
+        stock_prices=stock_prices,
+        strike=position["strike"],
+        premium=position["premium"],
+        option_type=position["type"].lower(),
+        position=position["side"].lower()
+    )
+
+    total_payoff += payoff
+
+    # Individual Position Line
+
+    fig_strategy.add_trace(
+        go.Scatter(
+            x=stock_prices,
+            y=payoff,
+            mode="lines",
+            name=f"Position {idx+1}"
+        )
+    )
+
+# TOTAL STRATEGY LINE
+
+fig_strategy.add_trace(
+    go.Scatter(
+        x=stock_prices,
+        y=total_payoff,
+        mode="lines",
+        name="Total Strategy",
+        line=dict(width=5)
+    )
+)
+
+fig_strategy.add_hline(
+    y=0,
+    line_dash="dash"
+)
+
+fig_strategy.update_layout(
+    template="plotly_dark",
+    title="Options Strategy Payoff",
+    xaxis_title="Underlying Price at Expiration",
+    yaxis_title="Profit / Loss",
+    height=600
+)
+
+st.plotly_chart(
+    fig_strategy,
+    use_container_width=True
+)
     
