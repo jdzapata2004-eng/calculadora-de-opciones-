@@ -3,46 +3,37 @@ import sys
 import os
 import plotly.graph_objects as go
 import numpy as np
-
+ 
 sys.path.append(
     os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../..")
     )
 )
-
+ 
 from src.black_scholes import price_option_black_scholes
 from src.strategies import option_payoff
-
-# ---------------------------------------------------
-# PAGE CONFIG
-# ---------------------------------------------------
-
+ 
 st.set_page_config(
     page_title="B-S Strategies · Derivatives Platform",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# ---------------------------------------------------
-# GLOBAL CSS
-# ---------------------------------------------------
-
+ 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap');
-
+ 
 html, body, [class*="css"] {
     font-family: 'Syne', sans-serif;
     background-color: #0a0a0f;
     color: #e8e8f0;
 }
 .stApp { background: #0a0a0f; }
-
+ 
 section[data-testid="stSidebar"] {
     background: #0f0f1a !important;
     border-right: 1px solid #1e1e2e;
 }
-
 section[data-testid="stSidebar"] label {
     font-family: 'DM Mono', monospace !important;
     font-size: 11px !important;
@@ -50,7 +41,6 @@ section[data-testid="stSidebar"] label {
     text-transform: uppercase !important;
     color: #555570 !important;
 }
-
 .sidebar-section {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -61,14 +51,11 @@ section[data-testid="stSidebar"] label {
     border-bottom: 1px solid #1e1e2e;
     margin-bottom: 16px;
 }
-
-/* Page header */
 .page-header {
     padding: 40px 8px 24px 8px;
     border-bottom: 1px solid #1e1e2e;
     margin-bottom: 28px;
 }
-
 .page-eyebrow {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -77,7 +64,6 @@ section[data-testid="stSidebar"] label {
     text-transform: uppercase;
     margin-bottom: 8px;
 }
-
 .page-title {
     font-family: 'Syne', sans-serif;
     font-size: 42px;
@@ -86,22 +72,17 @@ section[data-testid="stSidebar"] label {
     letter-spacing: -1.5px;
     line-height: 1.1;
 }
-
-/* Leg card */
 .leg-card {
     background: #0f0f1a;
     border: 1px solid #1e1e2e;
     border-radius: 10px;
     padding: 20px 24px 16px 24px;
     margin-bottom: 12px;
-    position: relative;
 }
-
 .leg-card.call-long  { border-left: 3px solid #4ade80; }
 .leg-card.call-short { border-left: 3px solid #86efac; }
 .leg-card.put-long   { border-left: 3px solid #f87171; }
 .leg-card.put-short  { border-left: 3px solid #fca5a5; }
-
 .leg-number {
     font-family: 'DM Mono', monospace;
     font-size: 9px;
@@ -110,7 +91,6 @@ section[data-testid="stSidebar"] label {
     color: #333350;
     margin-bottom: 12px;
 }
-
 .premium-display {
     display: flex;
     align-items: baseline;
@@ -118,8 +98,8 @@ section[data-testid="stSidebar"] label {
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid #1a1a2a;
+    flex-wrap: wrap;
 }
-
 .premium-label {
     font-family: 'DM Mono', monospace;
     font-size: 9px;
@@ -127,16 +107,35 @@ section[data-testid="stSidebar"] label {
     text-transform: uppercase;
     color: #333350;
 }
-
 .premium-value {
     font-family: 'DM Mono', monospace;
     font-size: 20px;
     font-weight: 500;
-    color: #60a5fa;
     margin-left: 8px;
 }
-
-/* Section header */
+.greeks-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.greek-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.greek-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #333350;
+}
+.greek-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: #888899;
+}
 .section-header {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -148,28 +147,12 @@ section[data-testid="stSidebar"] label {
     align-items: center;
     gap: 12px;
 }
-
 .section-header::after {
     content: '';
     flex: 1;
     height: 1px;
     background: #1e1e2e;
 }
-
-/* Selectbox / number input styling */
-div[data-baseweb="select"] > div {
-    background-color: #0f0f1a !important;
-    border-color: #1e1e2e !important;
-    font-family: 'DM Mono', monospace !important;
-    font-size: 13px !important;
-}
-
-/* Slider */
-.stSlider > div > div > div {
-    color: #60a5fa !important;
-}
-
-/* Summary bar */
 .summary-bar {
     display: flex;
     gap: 24px;
@@ -180,13 +163,11 @@ div[data-baseweb="select"] > div {
     margin-bottom: 24px;
     flex-wrap: wrap;
 }
-
 .summary-item {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-
 .summary-label {
     font-family: 'DM Mono', monospace;
     font-size: 9px;
@@ -194,85 +175,112 @@ div[data-baseweb="select"] > div {
     text-transform: uppercase;
     color: #333350;
 }
-
 .summary-value {
     font-family: 'DM Mono', monospace;
     font-size: 15px;
     color: #c0c0d8;
 }
-
 .summary-value.positive { color: #4ade80; }
 .summary-value.negative { color: #f87171; }
+ 
+/* Greeks summary card */
+.greeks-card {
+    background: #0f0f1a;
+    border: 1px solid #1e1e2e;
+    border-radius: 10px;
+    padding: 20px 28px;
+    margin-bottom: 24px;
+}
+.greeks-card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #333350;
+    margin-bottom: 16px;
+}
+.greeks-card-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+}
+.greek-card-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.greek-card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #333350;
+}
+.greek-card-symbol {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    color: #444460;
+    margin-bottom: 2px;
+}
+.greek-card-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: #60a5fa;
+}
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
-
+ 
 st.sidebar.markdown('<div class="sidebar-section">// Market Parameters</div>', unsafe_allow_html=True)
-
-spot = st.sidebar.number_input("Spot Price (S0)", value=100.0)
-risk_free_rate = st.sidebar.number_input("Risk-Free Rate (r)", value=0.05)
-volatility = st.sidebar.number_input("Volatility (σ)", value=0.20)
-maturity = st.sidebar.number_input("Time to Maturity (T)", value=1.0)
-
+ 
+spot           = st.sidebar.number_input("Spot Price (S0)",      value=100.0)
+risk_free_rate = st.sidebar.number_input("Risk-Free Rate (r)",   value=0.05)
+volatility     = st.sidebar.number_input("Volatility (σ)",       value=0.20)
+maturity       = st.sidebar.number_input("Time to Maturity (T)", value=1.0)
+ 
 # ---------------------------------------------------
 # PAGE HEADER
 # ---------------------------------------------------
-
+ 
 st.markdown("""
 <div class="page-header">
     <div class="page-eyebrow">// Black-Scholes Model</div>
     <div class="page-title">Strategy Builder</div>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 # ---------------------------------------------------
 # STRATEGY LEGS
 # ---------------------------------------------------
-
+ 
 st.markdown('<div class="section-header">Positions</div>', unsafe_allow_html=True)
-
-num_legs = st.slider("Number of Positions", min_value=1, max_value=4, value=2, label_visibility="collapsed")
-
+ 
+num_legs = st.slider(
+    "Number of Positions",
+    min_value=1, max_value=4, value=2,
+    label_visibility="collapsed"
+)
+ 
 positions = []
-
-# Color mapping for leg cards
-def leg_class(side, opt_type):
-    key = f"{opt_type.lower()}-{side.lower()}"
-    return key  # call-long | call-short | put-long | put-short
-
+ 
 for i in range(num_legs):
-
+ 
     col1, col2, col3, col4 = st.columns([1.2, 1.2, 1.4, 1.0])
-
+ 
     with col1:
-        position_side = st.selectbox(
-            f"Side",
-            ["Long", "Short"],
-            key=f"side_{i}"
-        )
+        position_side = st.selectbox("Side", ["Long", "Short"], key=f"side_{i}")
     with col2:
-        option_kind = st.selectbox(
-            f"Type",
-            ["Call", "Put"],
-            key=f"type_{i}"
-        )
+        option_kind = st.selectbox("Type", ["Call", "Put"], key=f"type_{i}")
     with col3:
-        strike_input = st.number_input(
-            f"Strike",
-            value=100.0,
-            key=f"strike_{i}"
-        )
+        strike_input = st.number_input("Strike", value=100.0, key=f"strike_{i}")
     with col4:
-        quantity_input = st.number_input(
-            f"Qty",
-            min_value=1,
-            value=1,
-            key=f"qty_{i}"
-        )
-
+        quantity_input = st.number_input("Qty", min_value=1, value=1, key=f"qty_{i}")
+ 
+    # --- Pricing + Greeks (single call) ---
     result = price_option_black_scholes(
         S0=spot,
         K=strike_input,
@@ -282,46 +290,131 @@ for i in range(num_legs):
         option_type=option_kind.lower(),
         q=0.0
     )
+ 
     premium = result["price"]
-    d1 = result["d1"]
-    d2 = result["d2"]
-
-    card_class = leg_class(position_side, option_kind)
-    sign = "+" if position_side == "Long" else "−"
+    d1      = result["d1"]
+    d2      = result["d2"]
+    delta   = result["delta"]
+    gamma   = result["gamma"]
+    vega    = result["vega"]
+    theta   = result["theta"]
+    rho     = result["rho"]
+ 
+    # --- Leg card ---
+    card_class    = f"{option_kind.lower()}-{position_side.lower()}"
+    sign          = "+" if position_side == "Long" else "−"
     premium_color = "#4ade80" if option_kind == "Call" else "#f87171"
-
+ 
     st.markdown(f"""
     <div class="leg-card {card_class}">
-        <div class="leg-number">Position {i+1} · {position_side} {option_kind} · K={strike_input:.0f} · x{quantity_input}</div>
+        <div class="leg-number">
+            Position {i+1} · {position_side} {option_kind} · K={strike_input:.0f} · x{quantity_input}
+        </div>
         <div class="premium-display">
             <span class="premium-label">B-S Premium</span>
             <span class="premium-value" style="color:{premium_color};">{sign} {premium:.4f}</span>
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:#333350;margin-left:16px;">
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:#333350;margin-left:20px;">
                 d₁ = {d1:.4f} &nbsp;&nbsp; d₂ = {d2:.4f}
             </span>
         </div>
+        <div class="greeks-row">
+            <div class="greek-item">
+                <div class="greek-label">Δ Delta</div>
+                <div class="greek-value">{delta:.4f}</div>
+            </div>
+            <div class="greek-item">
+                <div class="greek-label">Γ Gamma</div>
+                <div class="greek-value">{gamma:.4f}</div>
+            </div>
+            <div class="greek-item">
+                <div class="greek-label">V Vega</div>
+                <div class="greek-value">{vega:.4f}</div>
+            </div>
+            <div class="greek-item">
+                <div class="greek-label">Θ Theta</div>
+                <div class="greek-value">{theta:.4f}</div>
+            </div>
+            <div class="greek-item">
+                <div class="greek-label">ρ Rho</div>
+                <div class="greek-value">{rho:.4f}</div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-
+ 
+    # --- Append INSIDE the loop ---
     positions.append({
-        "side": position_side,
-        "type": option_kind,
-        "strike": strike_input,
-        "premium": premium,
-        "quantity": quantity_input
+        "side":     position_side,
+        "type":     option_kind,
+        "strike":   strike_input,
+        "premium":  premium,
+        "quantity": quantity_input,
+        "delta":    delta,
+        "gamma":    gamma,
+        "vega":     vega,
+        "theta":    theta,
+        "rho":      rho
     })
-
+ 
+# ---------------------------------------------------
+# PORTFOLIO GREEKS
+# ---------------------------------------------------
+ 
+def net(key):
+    return sum(
+        p[key] * p["quantity"] * (1 if p["side"] == "Long" else -1)
+        for p in positions
+    )
+ 
+total_delta = net("delta")
+total_gamma = net("gamma")
+total_vega  = net("vega")
+total_theta = net("theta")
+total_rho   = net("rho")
+ 
+st.markdown('<div class="section-header">Portfolio Greeks</div>', unsafe_allow_html=True)
+ 
+st.markdown(f"""
+<div class="greeks-card">
+    <div class="greeks-card-title">// Net exposure across all positions</div>
+    <div class="greeks-card-grid">
+        <div class="greek-card-item">
+            <div class="greek-card-symbol">Δ</div>
+            <div class="greek-card-label">Delta</div>
+            <div class="greek-card-value">{total_delta:.4f}</div>
+        </div>
+        <div class="greek-card-item">
+            <div class="greek-card-symbol">Γ</div>
+            <div class="greek-card-label">Gamma</div>
+            <div class="greek-card-value">{total_gamma:.4f}</div>
+        </div>
+        <div class="greek-card-item">
+            <div class="greek-card-symbol">V</div>
+            <div class="greek-card-label">Vega</div>
+            <div class="greek-card-value">{total_vega:.4f}</div>
+        </div>
+        <div class="greek-card-item">
+            <div class="greek-card-symbol">Θ</div>
+            <div class="greek-card-label">Theta</div>
+            <div class="greek-card-value">{total_theta:.4f}</div>
+        </div>
+        <div class="greek-card-item">
+            <div class="greek-card-symbol">ρ</div>
+            <div class="greek-card-label">Rho</div>
+            <div class="greek-card-value">{total_rho:.4f}</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+ 
 # ---------------------------------------------------
 # STRATEGY SUMMARY
 # ---------------------------------------------------
-
-total_cost = sum(
-    p["premium"] * p["quantity"] * (1 if p["side"] == "Long" else -1)
-    for p in positions
-)
+ 
+total_cost = net("premium")
 cost_class = "positive" if total_cost < 0 else "negative"
 cost_label = "Net Credit" if total_cost < 0 else "Net Debit"
-
+ 
 st.markdown(f"""
 <div class="summary-bar">
     <div class="summary-item">
@@ -350,23 +443,21 @@ st.markdown(f"""
     </div>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 # ---------------------------------------------------
 # PAYOFF CHART
 # ---------------------------------------------------
-
+ 
 st.markdown('<div class="section-header">Payoff at Expiration</div>', unsafe_allow_html=True)
-
-stock_prices = np.linspace(spot * 0.5, spot * 1.5, 600)
-total_payoff = np.zeros_like(stock_prices)
-
+ 
+stock_prices  = np.linspace(spot * 0.5, spot * 1.5, 600)
+total_payoff  = np.zeros_like(stock_prices)
+leg_colors    = ["#60a5fa", "#a78bfa", "#fb923c", "#e879f9"]
+ 
 fig = go.Figure()
-
-# Color palette for individual legs
-leg_colors = ["#60a5fa", "#a78bfa", "#fb923c", "#e879f9"]
-
+ 
 for idx, position in enumerate(positions):
-
+ 
     payoff = option_payoff(
         stock_prices=stock_prices,
         strike=position["strike"],
@@ -376,55 +467,31 @@ for idx, position in enumerate(positions):
         quantity=position["quantity"]
     )
     total_payoff += payoff
-
+ 
     fig.add_trace(go.Scatter(
-        x=stock_prices,
-        y=payoff,
+        x=stock_prices, y=payoff,
         mode="lines",
         name=f"P{idx+1} · {position['side']} {position['type']} K={position['strike']:.0f}",
         line=dict(color=leg_colors[idx % len(leg_colors)], width=1.5, dash="dot"),
         opacity=0.6
     ))
-
-# Positive / Negative fill for total
-positive_mask = total_payoff >= 0
-negative_mask = total_payoff < 0
-
-# Total line — green above zero, red below
+ 
 fig.add_trace(go.Scatter(
-    x=stock_prices,
-    y=np.where(total_payoff >= 0, total_payoff, 0),
-    mode="lines",
-    name="Profit Zone",
-    line=dict(color="#4ade80", width=0),
-    fill="tozeroy",
-    fillcolor="rgba(74, 222, 128, 0.08)",
-    showlegend=False
+    x=stock_prices, y=np.where(total_payoff >= 0, total_payoff, 0),
+    mode="lines", line=dict(color="#4ade80", width=0),
+    fill="tozeroy", fillcolor="rgba(74, 222, 128, 0.08)", showlegend=False
 ))
-
 fig.add_trace(go.Scatter(
-    x=stock_prices,
-    y=np.where(total_payoff < 0, total_payoff, 0),
-    mode="lines",
-    name="Loss Zone",
-    line=dict(color="#f87171", width=0),
-    fill="tozeroy",
-    fillcolor="rgba(248, 113, 113, 0.08)",
-    showlegend=False
+    x=stock_prices, y=np.where(total_payoff < 0, total_payoff, 0),
+    mode="lines", line=dict(color="#f87171", width=0),
+    fill="tozeroy", fillcolor="rgba(248, 113, 113, 0.08)", showlegend=False
 ))
-
 fig.add_trace(go.Scatter(
-    x=stock_prices,
-    y=total_payoff,
-    mode="lines",
-    name="Total P&L",
-    line=dict(
-        color="#f0f0fa",
-        width=2.5
-    )
+    x=stock_prices, y=total_payoff,
+    mode="lines", name="Total P&L",
+    line=dict(color="#f0f0fa", width=2.5)
 ))
-
-# Strike lines
+ 
 for position in positions:
     fig.add_vline(
         x=position["strike"],
@@ -432,29 +499,19 @@ for position in positions:
         line_color="rgba(100, 100, 150, 0.4)",
         line_width=1
     )
-
-# Spot line
+ 
 fig.add_vline(
-    x=spot,
-    line_dash="dash",
-    line_color="rgba(96, 165, 250, 0.5)",
-    line_width=1.5,
+    x=spot, line_dash="dash",
+    line_color="rgba(96, 165, 250, 0.5)", line_width=1.5,
     annotation_text="S₀",
     annotation_font=dict(family="DM Mono, monospace", size=10, color="#60a5fa"),
     annotation_position="top"
 )
-
-# Zero line
-fig.add_hline(
-    y=0,
-    line_color="rgba(80, 80, 120, 0.5)",
-    line_width=1
-)
-
+fig.add_hline(y=0, line_color="rgba(80, 80, 120, 0.5)", line_width=1)
+ 
 fig.update_layout(
     template="plotly_dark",
-    paper_bgcolor="#0f0f1a",
-    plot_bgcolor="#0f0f1a",
+    paper_bgcolor="#0f0f1a", plot_bgcolor="#0f0f1a",
     font=dict(family="DM Mono, monospace", color="#555570", size=11),
     title=dict(
         text="Strategy Payoff",
@@ -463,27 +520,23 @@ fig.update_layout(
     ),
     xaxis=dict(
         title="Underlying Price at Expiration",
-        gridcolor="#131320",
-        linecolor="#1e1e2e",
+        gridcolor="#131320", linecolor="#1e1e2e",
         tickfont=dict(family="DM Mono, monospace", size=10, color="#444460"),
         zeroline=False
     ),
     yaxis=dict(
         title="Profit / Loss",
-        gridcolor="#131320",
-        linecolor="#1e1e2e",
+        gridcolor="#131320", linecolor="#1e1e2e",
         tickfont=dict(family="DM Mono, monospace", size=10, color="#444460"),
         zeroline=False
     ),
     legend=dict(
-        bgcolor="rgba(15,15,26,0.9)",
-        bordercolor="#1e1e2e",
-        borderwidth=1,
+        bgcolor="rgba(15,15,26,0.9)", bordercolor="#1e1e2e", borderwidth=1,
         font=dict(family="DM Mono, monospace", size=10, color="#888899")
     ),
     height=520,
     margin=dict(l=0, r=0, t=48, b=0),
     hovermode="x unified"
 )
-
+ 
 st.plotly_chart(fig, use_container_width=True)
